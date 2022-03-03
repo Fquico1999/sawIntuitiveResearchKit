@@ -608,9 +608,15 @@ void mtsIntuitiveResearchKitSUJ::Configure(const std::string & filename)
         Arms[armIndex] = arm;
 
         // save which arm is the ECM
-        if (type == mtsIntuitiveResearchKitSUJArmData::SUJ_ECM) {
-            ECMIndex = armIndex;
+        // Hardcoding this to be PSM2 - ideally this could be a parameter set in the console config file
+        // to allow a base frame to be an arm other than ECM
+        // if (type == mtsIntuitiveResearchKitSUJArmData::SUJ_ECM) {
+        //     ECMIndex = armIndex;
+        // }
+        if (name == "PSM2") {
+            ECMIndex = armIndex; //misleading variable name in this particular case.
         }
+
 
         // Arm State so GUI widget for each arm can set/get state
         interfaceProvided->AddCommandWrite(&mtsIntuitiveResearchKitSUJ::state_command,
@@ -895,11 +901,19 @@ void mtsIntuitiveResearchKitSUJ::Run(void)
         arm = Arms[armIndex];
         // update positions with base frame, local positions are only
         // updated from FK when joints are ready
-        if (arm->mType != mtsIntuitiveResearchKitSUJArmData::SUJ_ECM) {
+        // if (arm->mType != mtsIntuitiveResearchKitSUJArmData::SUJ_ECM) {
+        //     arm->mBaseFrame.From(ecmTipToSUJBase.Position());
+        //     arm->mBaseFrameValid = ecmTipToSUJBase.Valid();
+        //     arm->m_measured_cp.SetReferenceFrame(ecmTipToSUJBase.ReferenceFrame());
+        // }
+
+        // Changed such that it is not necessary that the ECM be the baseframe.
+        if (armIndex != ECMIndex) {
             arm->mBaseFrame.From(ecmTipToSUJBase.Position());
             arm->mBaseFrameValid = ecmTipToSUJBase.Valid();
             arm->m_measured_cp.SetReferenceFrame(ecmTipToSUJBase.ReferenceFrame());
         }
+
         vctFrm4x4 armLocal(arm->m_local_measured_cp.Position());
         vctFrm4x4 armBase = arm->mBaseFrame * armLocal;
         // - with base frame
